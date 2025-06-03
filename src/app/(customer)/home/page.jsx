@@ -77,7 +77,7 @@ export default function CustomerHomepage() {
           {categories.map((category) => (
             <a
               key={category.id}
-              href={`/stores/${category.name.toLowerCase()}`}
+              href={`/products/${category.name.toLowerCase()}`}
               className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 hover:shadow-md transition-shadow"
             >
               <div
@@ -119,10 +119,9 @@ export default function CustomerHomepage() {
                 </div>
               </div>
               <div className="p-3">
-                <h3 className="font-semibold text-gray-900 text-sm mb-1 line-clamp-2">
+                <h3 className="font-semibold text-gray-900 text-sm mb-2 line-clamp-2">
                   {product.name}
                 </h3>
-                <p className="text-xs text-gray-500 mb-2">{product.store}</p>
                 <p className="font-bold text-blue-600">
                   {formatPrice(product.price)}
                 </p>

@@ -1,14 +1,14 @@
 "use client";
 import { useState } from "react";
-import { Home, Store, ShoppingBag, User, Menu, X } from "lucide-react";
+import { Home, Grid3X3, ShoppingCart, User, Menu, X } from "lucide-react";
 
 export default function CustomerLayout({ children }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const navigationItems = [
     { name: "Home", href: "/", icon: Home, active: true },
-    { name: "Toko", href: "/stores", icon: Store },
-    { name: "Produk", href: "/products", icon: ShoppingBag },
+    { name: "Keranjang", href: "/cart", icon: ShoppingCart },
+    { name: "Kategori", href: "/categories", icon: Grid3X3 },
     { name: "Profile", href: "/profile", icon: User },
   ];
 

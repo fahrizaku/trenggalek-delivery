@@ -1,15 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
-import {
-  Search,
-  Filter,
-  Star,
-  MapPin,
-  Pill,
-  AlertTriangle,
-  Clock,
-  Shield,
-} from "lucide-react";
+import { Search, Pill, AlertTriangle } from "lucide-react";
 
 // Mock data untuk produk apotek
 const pharmacyProducts = [
@@ -224,12 +215,6 @@ const priceRanges = [
 export default function PharmacyProductsPage() {
   const [products, setProducts] = useState(pharmacyProducts);
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("all");
-  const [selectedSort, setSelectedSort] = useState("name");
-  const [selectedPriceRange, setSelectedPriceRange] = useState("all");
-  const [showPrescriptionOnly, setShowPrescriptionOnly] = useState(false);
-  const [showFilters, setShowFilters] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
 
   const formatPrice = (price) => {
     return new Intl.NumberFormat("id-ID", {
@@ -239,58 +224,9 @@ export default function PharmacyProductsPage() {
     }).format(price);
   };
 
-  const formatExpiredDate = (dateString) => {
-    const date = new Date(dateString);
-    const today = new Date();
-    const diffTime = date - today;
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-    if (diffDays < 0) return "Kadaluarsa";
-    if (diffDays <= 30) return `${diffDays} hari lagi`;
-    if (diffDays <= 365) return `${Math.ceil(diffDays / 30)} bulan lagi`;
-    return `${Math.ceil(diffDays / 365)} tahun lagi`;
-  };
-
-  const getCategoryIcon = (category) => {
-    switch (category) {
-      case "Obat Keras":
-        return "🔴";
-      case "Obat Bebas Terbatas":
-        return "🟡";
-      case "Obat Bebas":
-        return "🟢";
-      case "Suplemen":
-        return "💊";
-      case "Antiseptik":
-        return "🧴";
-      default:
-        return "💊";
-    }
-  };
-
-  // Filter dan Sort Products
+  // Filter products by search query only
   useEffect(() => {
     let filtered = pharmacyProducts;
-
-    // Filter by category
-    if (selectedCategory !== "all") {
-      filtered = filtered.filter(
-        (product) => product.category === selectedCategory
-      );
-    }
-
-    // Filter by price range
-    if (selectedPriceRange !== "all") {
-      const range = priceRanges.find((r) => r.id === selectedPriceRange);
-      filtered = filtered.filter(
-        (product) => product.price >= range.min && product.price <= range.max
-      );
-    }
-
-    // Filter by prescription requirement
-    if (showPrescriptionOnly) {
-      filtered = filtered.filter((product) => !product.isPrescriptionRequired);
-    }
 
     // Filter by search query
     if (searchQuery.trim()) {
@@ -308,32 +244,8 @@ export default function PharmacyProductsPage() {
       );
     }
 
-    // Sort products
-    filtered.sort((a, b) => {
-      switch (selectedSort) {
-        case "name":
-          return a.name.localeCompare(b.name);
-        case "price-low":
-          return a.price - b.price;
-        case "price-high":
-          return b.price - a.price;
-        case "rating":
-          return b.rating - a.rating;
-        case "expiry":
-          return new Date(b.expiredDate) - new Date(a.expiredDate);
-        default:
-          return 0;
-      }
-    });
-
     setProducts(filtered);
-  }, [
-    searchQuery,
-    selectedCategory,
-    selectedSort,
-    selectedPriceRange,
-    showPrescriptionOnly,
-  ]);
+  }, [searchQuery]);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -361,122 +273,12 @@ export default function PharmacyProductsPage() {
               className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent bg-gray-50"
             />
           </div>
-
-          {/* Filter and Sort */}
-          <div className="flex items-center justify-between">
-            <button
-              onClick={() => setShowFilters(!showFilters)}
-              className="flex items-center space-x-2 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
-            >
-              <Filter size={16} />
-              <span className="text-sm font-medium">Filter</span>
-            </button>
-
-            <div className="text-sm text-gray-600">
-              {products.length} produk ditemukan
-            </div>
-          </div>
         </div>
-
-        {/* Filters Panel */}
-        {showFilters && (
-          <div className="bg-white border-t border-gray-200 px-4 py-4 max-h-96 overflow-y-auto">
-            {/* Prescription Filter */}
-            <div className="mb-6">
-              <h3 className="font-medium text-gray-900 mb-3">Filter Khusus</h3>
-              <label className="flex items-center space-x-3">
-                <input
-                  type="checkbox"
-                  checked={showPrescriptionOnly}
-                  onChange={(e) => setShowPrescriptionOnly(e.target.checked)}
-                  className="w-4 h-4 text-green-600 bg-gray-100 border-gray-300 rounded focus:ring-green-500"
-                />
-                <span className="text-sm text-gray-700">
-                  Hanya obat tanpa resep
-                </span>
-              </label>
-            </div>
-
-            {/* Category Filter */}
-            <div className="mb-6">
-              <h3 className="font-medium text-gray-900 mb-3">Kategori Obat</h3>
-              <div className="space-y-2">
-                {medicineCategories.map((category) => (
-                  <button
-                    key={category.id}
-                    onClick={() => setSelectedCategory(category.id)}
-                    className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors flex items-center space-x-2 ${
-                      selectedCategory === category.id
-                        ? "bg-green-50 text-green-600 border border-green-200"
-                        : "text-gray-700 hover:bg-gray-50"
-                    }`}
-                  >
-                    <span>{getCategoryIcon(category.name)}</span>
-                    <span>
-                      {category.name} ({category.count})
-                    </span>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Price Range Filter */}
-            <div className="mb-6">
-              <h3 className="font-medium text-gray-900 mb-3">Rentang Harga</h3>
-              <div className="space-y-2">
-                {priceRanges.map((range) => (
-                  <button
-                    key={range.id}
-                    onClick={() => setSelectedPriceRange(range.id)}
-                    className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${
-                      selectedPriceRange === range.id
-                        ? "bg-green-50 text-green-600 border border-green-200"
-                        : "text-gray-700 hover:bg-gray-50"
-                    }`}
-                  >
-                    {range.name}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Sort Options */}
-            <div className="mb-4">
-              <h3 className="font-medium text-gray-900 mb-3">Urutkan</h3>
-              <div className="space-y-2">
-                {sortOptions.map((option) => (
-                  <button
-                    key={option.id}
-                    onClick={() => setSelectedSort(option.id)}
-                    className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${
-                      selectedSort === option.id
-                        ? "bg-green-50 text-green-600 border border-green-200"
-                        : "text-gray-700 hover:bg-gray-50"
-                    }`}
-                  >
-                    {option.name}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <button
-              onClick={() => setShowFilters(false)}
-              className="w-full px-4 py-3 bg-green-500 text-white rounded-lg font-medium hover:bg-green-600 transition-colors"
-            >
-              Terapkan Filter
-            </button>
-          </div>
-        )}
       </div>
 
       {/* Products Grid */}
       <div className="px-4 py-4">
-        {isLoading ? (
-          <div className="flex justify-center py-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-500"></div>
-          </div>
-        ) : products.length === 0 ? (
+        {products.length === 0 ? (
           <div className="text-center py-8">
             <Pill size={48} className="mx-auto text-gray-400 mb-4" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">
@@ -509,90 +311,17 @@ export default function PharmacyProductsPage() {
                       </div>
                     </div>
                   )}
-
-                  {/* Stock Badge */}
-                  <div className="absolute top-2 right-2">
-                    <span
-                      className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        product.stock > 30
-                          ? "bg-green-100 text-green-700"
-                          : product.stock > 15
-                          ? "bg-yellow-100 text-yellow-700"
-                          : "bg-red-100 text-red-700"
-                      }`}
-                    >
-                      {product.stock} tersisa
-                    </span>
-                  </div>
                 </div>
 
                 {/* Product Info */}
                 <div className="p-3">
-                  <h3 className="font-semibold text-gray-900 text-sm mb-1 line-clamp-2">
+                  <h3 className="font-semibold text-gray-900 text-sm mb-2 line-clamp-2">
                     {product.name}
                   </h3>
 
-                  <div className="text-xs text-gray-500 mb-2">
-                    {product.manufacturer} • {product.dosage}
-                  </div>
-
-                  <div className="flex items-center space-x-1 mb-2">
-                    <MapPin size={12} className="text-gray-400" />
-                    <span className="text-xs text-gray-500 truncate">
-                      {product.store}
-                    </span>
-                  </div>
-
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center space-x-1">
-                      <Star
-                        size={12}
-                        className="text-yellow-400 fill-current"
-                      />
-                      <span className="text-xs text-gray-600">
-                        {product.rating}
-                      </span>
-                    </div>
-                    <div className="flex items-center space-x-1">
-                      <Shield size={10} className="text-green-500" />
-                      <span className="text-xs text-green-600">BPOM</span>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-between mb-2">
-                    <p className="font-bold text-green-600 text-sm">
-                      {formatPrice(product.price)}
-                    </p>
-                    <span className="text-xs text-gray-500">
-                      /{product.unit}
-                    </span>
-                  </div>
-
-                  {/* Category & Expiry */}
-                  <div className="flex items-center justify-between text-xs">
-                    <span
-                      className={`px-2 py-1 rounded-full font-medium ${
-                        product.category === "Obat Keras"
-                          ? "bg-red-100 text-red-700"
-                          : product.category === "Obat Bebas Terbatas"
-                          ? "bg-yellow-100 text-yellow-700"
-                          : product.category === "Obat Bebas"
-                          ? "bg-green-100 text-green-700"
-                          : product.category === "Suplemen"
-                          ? "bg-blue-100 text-blue-700"
-                          : "bg-purple-100 text-purple-700"
-                      }`}
-                    >
-                      {getCategoryIcon(product.category)} {product.category}
-                    </span>
-                  </div>
-
-                  <div className="flex items-center space-x-1 mt-2">
-                    <Clock size={10} className="text-gray-400" />
-                    <span className="text-xs text-gray-500">
-                      Exp: {formatExpiredDate(product.expiredDate)}
-                    </span>
-                  </div>
+                  <p className="font-bold text-green-600 text-sm">
+                    {formatPrice(product.price)}
+                  </p>
                 </div>
               </a>
             ))}
