@@ -2,9 +2,9 @@ import { ShoppingCart, ChevronRight, Search } from "lucide-react";
 
 // Mock data - nanti diganti dengan API call
 const categories = [
-  { id: 1, name: "Supermarket", icon: "🏪", color: "bg-blue-500" },
+  { id: 1, name: "Supermarket", icon: "🛒", color: "bg-blue-500" },
   { id: 2, name: "Apotek", icon: "💊", color: "bg-green-500" },
-  { id: 3, name: "Makanan", icon: "🍔", color: "bg-orange-500" },
+  { id: 3, name: "Makanan", icon: "🍜", color: "bg-orange-500" },
 ];
 
 const popularProducts = [
@@ -54,7 +54,7 @@ export default function CustomerHomepage() {
           />
           <input
             type="text"
-            placeholder="Cari toko atau produk..."
+            placeholder="Cari semua produk..."
             className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50"
           />
         </div>
@@ -63,7 +63,7 @@ export default function CustomerHomepage() {
       {/* Categories */}
       <div className="px-4">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-bold text-gray-900">Kategori</h2>
+          <h2 className="text-xl font-bold text-gray-900">Layanan</h2>
           <a
             href="/stores"
             className="text-blue-600 text-sm font-medium flex items-center"

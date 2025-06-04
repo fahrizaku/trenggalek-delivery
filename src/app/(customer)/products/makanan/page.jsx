@@ -261,7 +261,7 @@ export default function FoodProductsPage() {
             />
             <input
               type="text"
-              placeholder="Cari makanan, minuman, atau warung..."
+              placeholder="Cari..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-gray-50"

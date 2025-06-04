@@ -13,3 +13,108 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
+// Enum untuk kategori toko
+enum StoreCategory {
+  SUPERMARKET
+  APOTEK
+  MAKANAN_MINUMAN
+}
+
+// Enum untuk role user
+enum UserRole {
+  CUSTOMER
+  STORE_OWNER
+  ADMIN
+}
+
+// Enum untuk tipe produk
+enum ProductType {
+  SUPERMARKET
+  PHARMACY
+  FOOD
+}
+
+// Model User untuk basic authentication
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  phone     String   @unique
+  name      String
+  role      UserRole @default(CUSTOMER)
+  avatar    String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relasi untuk store owner
+  stores    Store[]
+
+  @@map("users")
+}
+
+// Model untuk toko
+model Store {
+  id          String        @id @default(cuid())
+  ownerId     String
+  name        String
+  description String?
+  category    StoreCategory
+  address     String
+  phone       String
+  email       String?
+  image       String?
+  isActive    Boolean       @default(true)
+  openTime    String        // Format: "08:00"
+  closeTime   String        // Format: "22:00"
+  isOpen      Boolean       @default(true)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  owner    User      @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  products Product[]
+
+  @@map("stores")
+}
+
+// Model unified untuk semua produk
+model Product {
+  id          String      @id @default(cuid())
+  storeId     String
+  productType ProductType // Discriminator field
+  name        String
+  description String?
+  price       Float
+  image       String?
+  category    String      // Kategori produk berdasarkan jenis toko
+  stock       Int         @default(0)
+  isActive    Boolean     @default(true)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  // Common fields
+  unit        String?     // Satuan (pcs, kg, liter, strip, botol, porsi, dll)
+  
+  // Supermarket specific fields
+  brand       String?     // Merek produk (untuk supermarket)
+  
+  // Pharmacy specific fields
+  manufacturer            String?  // Pabrik pembuat (untuk apotek)
+  isPrescriptionRequired  Boolean? // Apakah butuh resep (untuk apotek)
+  
+  // Food specific fields
+  preparationTime Int?     // Waktu persiapan dalam menit (untuk makanan)
+  isSpicy         Boolean? // Apakah pedas (untuk makanan)
+  isVegetarian    Boolean? // Apakah vegetarian (untuk makanan)
+  isHalal         Boolean? // Apakah halal (untuk makanan)
+
+  // Relasi
+  store Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
+  // Index untuk performa
+  @@index([storeId])
+  @@index([productType])
+  @@index([category])
+  @@index([isActive])
+  @@map("products")
+}
