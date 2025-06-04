@@ -1,3 +1,4 @@
+// file: src/app/(customer)/pruducts/makanan/page.jsx
 "use client";
 import { useState, useEffect } from "react";
 import { Search, ChefHat } from "lucide-react";

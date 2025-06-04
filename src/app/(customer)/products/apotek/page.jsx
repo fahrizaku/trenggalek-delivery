@@ -1,3 +1,4 @@
+// file: src/app/(customer)/products/apotek/page.jsx
 "use client";
 import { useState, useEffect } from "react";
 import { Search, Pill, AlertTriangle } from "lucide-react";

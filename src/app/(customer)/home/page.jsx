@@ -1,3 +1,4 @@
+// file: src/app/(customer)/home/page.jsx
 import { ShoppingCart, ChevronRight, Search } from "lucide-react";
 
 // Mock data - nanti diganti dengan API call

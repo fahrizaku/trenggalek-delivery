@@ -1,3 +1,4 @@
+//file: src/app/(customer)/products/supermarket/page.jsx
 "use client";
 import { useState, useEffect } from "react";
 import { Search, Package } from "lucide-react";
