@@ -1,5 +1,7 @@
+//file: src/app/(customer)/layout.js
 "use client";
 import { useState } from "react";
+import { usePathname } from "next/navigation";
 import {
   Home,
   Grid3X3,
@@ -7,26 +9,43 @@ import {
   User,
   Menu,
   X,
-  Settings,
+  Store,
 } from "lucide-react";
 
 export default function CustomerLayout({ children }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isServicesOpen, setIsServicesOpen] = useState(false);
+  const pathname = usePathname();
 
   const navigationItems = [
-    { name: "Home", href: "/", icon: Home, active: true },
-    { name: "Layanan", href: "#", icon: Settings, isServices: true },
+    { name: "Home", href: "/", icon: Home },
+    { name: "Layanan", href: "#", icon: Store, isServices: true },
     { name: "Keranjang", href: "/cart", icon: ShoppingCart },
     { name: "Kategori", href: "/categories", icon: Grid3X3 },
     { name: "Profile", href: "/profile", icon: User },
   ];
 
   const serviceItems = [
-    { name: "Supermarket", href: "/supermarket", emoji: "🛒" },
-    { name: "Apotek", href: "/apotek", emoji: "💊" },
-    { name: "Makanan", href: "/makanan", emoji: "🍜" },
+    { name: "Supermarket", href: "/products/supermarket", emoji: "🛒" },
+    { name: "Apotek", href: "/products/apotek", emoji: "💊" },
+    { name: "Makanan", href: "/products/makanan", emoji: "🍜" },
   ];
+
+  // Function to check if navigation item is active
+  const isNavItemActive = (item) => {
+    if (item.isServices) {
+      // Check if current path starts with any service path
+      return serviceItems.some((service) => pathname.startsWith(service.href));
+    }
+
+    if (item.href === "/") {
+      // For home, only match exact path
+      return pathname === "/";
+    }
+
+    // For other items, check if current path starts with the item's href
+    return pathname.startsWith(item.href);
+  };
 
   const handleNavClick = (item) => {
     if (item.isServices) {
@@ -49,7 +68,7 @@ export default function CustomerLayout({ children }) {
               </div>
               <div>
                 <h1 className="text-lg font-bold text-gray-900">
-                  TrenggalekDelivery
+                  Trenggalek Delivery
                 </h1>
                 <p className="text-xs text-gray-500">
                   Antar cepat, harga tepat
@@ -76,7 +95,7 @@ export default function CustomerLayout({ children }) {
                   key={item.name}
                   href={item.href}
                   className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition-colors ${
-                    item.active
+                    isNavItemActive(item)
                       ? "bg-blue-50 text-blue-600"
                       : "text-gray-700 hover:bg-gray-50"
                   }`}
@@ -143,13 +162,15 @@ export default function CustomerLayout({ children }) {
       <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 py-2 z-40">
         <div className="flex justify-around">
           {navigationItems.map((item) => {
+            const isActive = isNavItemActive(item);
+
             if (item.isServices) {
               return (
                 <button
                   key={item.name}
                   onClick={() => handleNavClick(item)}
                   className={`flex flex-col items-center space-y-1 py-2 px-3 rounded-lg transition-colors ${
-                    isServicesOpen
+                    isActive || isServicesOpen
                       ? "text-blue-600"
                       : "text-gray-400 hover:text-gray-600"
                   }`}
@@ -165,7 +186,7 @@ export default function CustomerLayout({ children }) {
                 key={item.name}
                 href={item.href}
                 className={`flex flex-col items-center space-y-1 py-2 px-3 rounded-lg transition-colors ${
-                  item.active
+                  isActive
                     ? "text-blue-600"
                     : "text-gray-400 hover:text-gray-600"
                 }`}

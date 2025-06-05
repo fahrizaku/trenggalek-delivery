@@ -197,22 +197,6 @@ const medicineCategories = [
   },
 ];
 
-const sortOptions = [
-  { id: "name", name: "Nama A-Z" },
-  { id: "price-low", name: "Harga Terendah" },
-  { id: "price-high", name: "Harga Tertinggi" },
-  { id: "rating", name: "Rating Tertinggi" },
-  { id: "expiry", name: "Terlama Expired" },
-];
-
-const priceRanges = [
-  { id: "all", name: "Semua Harga", min: 0, max: Infinity },
-  { id: "under-15k", name: "Di bawah Rp 15.000", min: 0, max: 15000 },
-  { id: "15k-30k", name: "Rp 15.000 - Rp 30.000", min: 15000, max: 30000 },
-  { id: "30k-50k", name: "Rp 30.000 - Rp 50.000", min: 30000, max: 50000 },
-  { id: "above-50k", name: "Di atas Rp 50.000", min: 50000, max: Infinity },
-];
-
 export default function PharmacyProductsPage() {
   const [products, setProducts] = useState(pharmacyProducts);
   const [searchQuery, setSearchQuery] = useState("");
@@ -294,7 +278,7 @@ export default function PharmacyProductsPage() {
             {products.map((product) => (
               <a
                 key={product.id}
-                href={`/products/pharmacy/${product.id}`}
+                href={`/products/apotek/${product.id}`}
                 className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow"
               >
                 {/* Product Image */}

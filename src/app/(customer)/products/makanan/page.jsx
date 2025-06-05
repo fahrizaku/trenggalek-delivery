@@ -288,7 +288,7 @@ export default function FoodProductsPage() {
             {products.map((product) => (
               <a
                 key={product.id}
-                href={`/products/food/${product.id}`}
+                href={`/products/makanan/${product.id}`}
                 className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow"
               >
                 {/* Product Image */}
