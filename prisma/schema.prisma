@@ -85,9 +85,11 @@ model Product {
   name        String
   description String?
   price       Float
+  purchasePrice Float?    // Harga beli dari supplier
   image       String?
   category    String      // Kategori produk berdasarkan jenis toko
-  stock       Int         @default(0)
+  stock       Int         @default(50)
+  weight      Int         // Berat produk dalam gram
   isActive    Boolean     @default(true)
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt

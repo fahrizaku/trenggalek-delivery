@@ -18,7 +18,7 @@ export default function CustomerLayout({ children }) {
   const pathname = usePathname();
 
   const navigationItems = [
-    { name: "Home", href: "/", icon: Home },
+    { name: "Home", href: "/home", icon: Home },
     { name: "Layanan", href: "#", icon: Store, isServices: true },
     { name: "Keranjang", href: "/cart", icon: ShoppingCart },
     { name: "Kategori", href: "/categories", icon: Grid3X3 },
