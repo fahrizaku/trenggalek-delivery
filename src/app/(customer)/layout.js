@@ -11,16 +11,20 @@ import {
   X,
   Store,
 } from "lucide-react";
+import { useCart } from "@/contexts/CartContext";
 
 export default function CustomerLayout({ children }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isServicesOpen, setIsServicesOpen] = useState(false);
   const pathname = usePathname();
 
+  // Use cart context to get total items
+  const { getTotalItems, isLoaded } = useCart();
+
   const navigationItems = [
     { name: "Home", href: "/home", icon: Home },
     { name: "Layanan", href: "#", icon: Store, isServices: true },
-    { name: "Keranjang", href: "/cart", icon: ShoppingCart },
+    { name: "Keranjang", href: "/cart", icon: ShoppingCart, hasCart: true },
     { name: "Kategori", href: "/categories", icon: Grid3X3 },
     { name: "Profile", href: "/profile", icon: User },
   ];
@@ -53,6 +57,20 @@ export default function CustomerLayout({ children }) {
     } else {
       setIsServicesOpen(false);
     }
+  };
+
+  // Badge component for cart
+  const CartBadge = ({ count, className = "" }) => {
+    if (!isLoaded || count === 0) return null;
+
+    return (
+      <span
+        className={`absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center font-medium ${className}`}
+        style={{ fontSize: "10px" }}
+      >
+        {count > 99 ? "9+" : count}
+      </span>
+    );
   };
 
   return (
@@ -94,14 +112,24 @@ export default function CustomerLayout({ children }) {
                 <a
                   key={item.name}
                   href={item.href}
-                  className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition-colors ${
+                  className={`flex items-center justify-between px-3 py-2 rounded-lg transition-colors ${
                     isNavItemActive(item)
                       ? "bg-blue-50 text-blue-600"
                       : "text-gray-700 hover:bg-gray-50"
                   }`}
                 >
-                  <item.icon size={20} />
-                  <span className="font-medium">{item.name}</span>
+                  <div className="flex items-center space-x-3">
+                    <div className="relative">
+                      <item.icon size={20} />
+                      {item.hasCart && <CartBadge count={getTotalItems()} />}
+                    </div>
+                    <span className="font-medium">{item.name}</span>
+                  </div>
+                  {item.hasCart && getTotalItems() > 0 && (
+                    <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
+                      {getTotalItems()} item
+                    </span>
+                  )}
                 </a>
               ))}
             </nav>
@@ -185,13 +213,16 @@ export default function CustomerLayout({ children }) {
               <a
                 key={item.name}
                 href={item.href}
-                className={`flex flex-col items-center space-y-1 py-2 px-3 rounded-lg transition-colors ${
+                className={`flex flex-col items-center space-y-1 py-2 px-3 rounded-lg transition-colors relative ${
                   isActive
                     ? "text-blue-600"
                     : "text-gray-400 hover:text-gray-600"
                 }`}
               >
-                <item.icon size={20} />
+                <div className="relative">
+                  <item.icon size={20} />
+                  {item.hasCart && <CartBadge count={getTotalItems()} />}
+                </div>
                 <span className="text-xs font-medium">{item.name}</span>
               </a>
             );
