@@ -196,7 +196,7 @@ export default function CartPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-20">
+    <div className="min-h-screen bg-gray-50">
       {/* Header - dengan margin top untuk menghindari overlap dengan customer layout header */}
       <div className="bg-white sticky top-16 z-40 border-b border-gray-200">
         <div className="px-4 py-4">
@@ -219,17 +219,11 @@ export default function CartPage() {
               </button>
             )}
           </div>
-
-          {getTotalItems() > 0 && (
-            <div className="mt-3 text-sm text-gray-600">
-              {getTotalItems()} item • {formatPrice(getTotalValue(allProducts))}
-            </div>
-          )}
         </div>
       </div>
 
       {/* Cart Content */}
-      <div className="px-4 py-4">
+      <div className={`px-4 py-4 ${getTotalItems() > 0 ? "pb-32" : "pb-20"}`}>
         {getTotalItems() === 0 ? (
           // Empty Cart
           <div className="text-center py-16">
@@ -315,39 +309,29 @@ export default function CartPage() {
                 ))}
               </div>
             </div>
-
-            {/* Order Summary */}
-            <div className="bg-white rounded-xl border border-gray-100 p-4">
-              <h3 className="font-semibold text-gray-900 mb-3">
-                Ringkasan Pesanan
-              </h3>
-
-              <div className="space-y-2 mb-4">
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">
-                    Subtotal ({getTotalItems()} item)
-                  </span>
-                  <span className="text-gray-900">
-                    {formatPrice(getTotalValue(allProducts))}
-                  </span>
-                </div>
-                <div className="border-t border-gray-100 pt-2 mt-2">
-                  <div className="flex justify-between font-semibold">
-                    <span className="text-gray-900">Total</span>
-                    <span className="text-blue-600">
-                      {formatPrice(getTotalValue(allProducts))}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              <button className="w-full bg-blue-500 hover:bg-blue-600 text-white py-3 rounded-lg font-medium transition-colors">
-                Lanjut ke Checkout
-              </button>
-            </div>
           </div>
         )}
       </div>
+
+      {/* Sticky Bottom Order Summary - Only show when cart has items */}
+      {getTotalItems() > 0 && (
+        <div className="fixed bottom-20 left-0 right-0 bg-white border-t border-gray-200 px-4 py-4 z-30 shadow-lg">
+          <div className="flex items-center justify-between">
+            {/* Left Side - Total Price and Shipping Info */}
+            <div className="flex-1">
+              <div className="text-lg font-bold text-gray-900">
+                {formatPrice(getTotalValue(allProducts))}
+              </div>
+              <div className="text-xs text-gray-500">Belum termasuk ongkir</div>
+            </div>
+
+            {/* Right Side - Checkout Button */}
+            <button className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg font-medium transition-colors">
+              Checkout
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Clear Cart Confirmation Modal */}
       {showClearConfirmation && (
