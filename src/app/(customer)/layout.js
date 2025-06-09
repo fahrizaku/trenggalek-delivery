@@ -10,6 +10,7 @@ import {
   Menu,
   X,
   Store,
+  ArrowLeft,
 } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
 
@@ -21,6 +22,51 @@ export default function CustomerLayout({ children }) {
   // Use cart context to get total items
   const { getTotalItems, isLoaded } = useCart();
 
+  // Check if current page needs minimal layout
+  const isCheckoutPage = pathname.startsWith("/checkout");
+  const isCartPage = pathname.startsWith("/cart");
+  const needsMinimalLayout = isCheckoutPage || isCartPage;
+
+  // If minimal layout is needed (checkout or cart page)
+  if (needsMinimalLayout) {
+    // Determine page title and back URL
+    let pageTitle = "Checkout";
+    let backUrl = "/cart";
+
+    if (isCartPage) {
+      pageTitle = "Keranjang";
+      backUrl = "/home"; // Default back to home, but this will be handled by browser history
+    }
+
+    return (
+      <div className="min-h-screen bg-gray-50">
+        {/* Simple Header untuk Checkout/Cart */}
+        <header className="bg-white shadow-sm sticky top-0 z-50">
+          <div className="px-4 py-3">
+            <div className="flex items-center space-x-3">
+              <button
+                onClick={() => window.history.back()}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <ArrowLeft size={20} className="text-gray-600" />
+              </button>
+              <div className="flex items-center space-x-2">
+                <div className="w-6 h-6 bg-gradient-to-r from-blue-500 to-purple-600 rounded-md flex items-center justify-center">
+                  <span className="text-white font-bold text-xs">TD</span>
+                </div>
+                <h1 className="text-lg font-bold text-gray-900">{pageTitle}</h1>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        {/* Main Content */}
+        <main>{children}</main>
+      </div>
+    );
+  }
+
+  // Regular customer layout for other pages
   const navigationItems = [
     { name: "Home", href: "/home", icon: Home },
     { name: "Layanan", href: "#", icon: Store, isServices: true },

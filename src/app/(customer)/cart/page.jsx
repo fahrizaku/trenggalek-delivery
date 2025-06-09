@@ -1,7 +1,7 @@
 // file: src/app/(customer)/cart/page.jsx
 "use client";
 import { useState } from "react";
-import { ShoppingCart, Plus, Minus, Trash2, ArrowLeft } from "lucide-react";
+import { ShoppingCart, Plus, Minus, Trash2 } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
 
 // Mock data produk (dalam aplikasi nyata, ini akan diambil dari API/database)
@@ -197,17 +197,14 @@ export default function CartPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header - dengan margin top untuk menghindari overlap dengan customer layout header */}
-      <div className="bg-white sticky top-16 z-40 border-b border-gray-200">
+      {/* Cart Summary Header */}
+      <div className="bg-white border-b border-gray-200">
         <div className="px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center">
-                <ShoppingCart size={16} className="text-white" />
+              <div className="text-sm text-gray-600">
+                {getTotalItems()} item dalam keranjang
               </div>
-              <h1 className="text-xl font-bold text-gray-900">
-                Keranjang Belanja
-              </h1>
             </div>
 
             {getTotalItems() > 0 && (
@@ -315,7 +312,7 @@ export default function CartPage() {
 
       {/* Sticky Bottom Order Summary - Only show when cart has items */}
       {getTotalItems() > 0 && (
-        <div className="fixed bottom-20 left-0 right-0 bg-white border-t border-gray-200 px-4 py-4 z-30 shadow-lg">
+        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 py-4 z-30 shadow-lg">
           <div className="flex items-center justify-between">
             {/* Left Side - Total Price and Shipping Info */}
             <div className="flex-1">
@@ -326,9 +323,12 @@ export default function CartPage() {
             </div>
 
             {/* Right Side - Checkout Button */}
-            <button className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg font-medium transition-colors">
+            <a
+              href="/checkout"
+              className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg font-medium transition-colors inline-block text-center"
+            >
               Checkout
-            </button>
+            </a>
           </div>
         </div>
       )}
