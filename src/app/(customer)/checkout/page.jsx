@@ -1,14 +1,15 @@
 // file: src/app/(customer)/checkout/page.jsx
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   MapPin,
   Clock,
   CreditCard,
   Wallet,
-  CheckCircle,
   Search,
   MessageCircle,
+  AlertCircle,
+  X,
 } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
 
@@ -56,20 +57,6 @@ const allProducts = [
     brand: "Gulaku",
     category: "Makanan Pokok",
   },
-];
-
-// Mock desa/kelurahan data with shipping costs
-const villages = [
-  { id: 1, name: "Trenggalek", shippingCost: 5000 },
-  { id: 2, name: "Karangan", shippingCost: 7000 },
-  { id: 3, name: "Tugu", shippingCost: 6000 },
-  { id: 4, name: "Ngantru", shippingCost: 8000 },
-  { id: 5, name: "Durenan", shippingCost: 10000 },
-  { id: 6, name: "Pogalan", shippingCost: 9000 },
-  { id: 7, name: "Watulimo", shippingCost: 12000 },
-  { id: 8, name: "Kampak", shippingCost: 11000 },
-  { id: 9, name: "Dongko", shippingCost: 15000 },
-  { id: 10, name: "Panggul", shippingCost: 13000 },
 ];
 
 // Mock delivery time options
@@ -125,9 +112,14 @@ export default function CheckoutPage() {
 
   // Delivery address states
   const [customerName, setCustomerName] = useState("");
-  const [selectedVillage, setSelectedVillage] = useState(null);
-  const [villageSearch, setVillageSearch] = useState("");
-  const [showVillageDropdown, setShowVillageDropdown] = useState(false);
+  const [selectedDusun, setSelectedDusun] = useState(null);
+  const [dusunSearch, setDusunSearch] = useState("");
+  const [showDusunDropdown, setShowDusunDropdown] = useState(false);
+
+  // Dusun data states
+  const [dusunList, setDusunList] = useState([]);
+  const [isLoadingDusun, setIsLoadingDusun] = useState(false);
+  const [dusunError, setDusunError] = useState(null);
 
   const formatPrice = (price) => {
     return new Intl.NumberFormat("id-ID", {
@@ -137,9 +129,54 @@ export default function CheckoutPage() {
     }).format(price);
   };
 
-  // Filter villages based on search
-  const filteredVillages = villages.filter((village) =>
-    village.name.toLowerCase().includes(villageSearch.toLowerCase())
+  // Fetch dusun data from API
+  const fetchDusun = async (searchQuery = "") => {
+    setIsLoadingDusun(true);
+    setDusunError(null);
+
+    try {
+      const url = new URL("/api/dusun", window.location.origin);
+      if (searchQuery) {
+        url.searchParams.set("search", searchQuery);
+      }
+
+      const response = await fetch(url);
+      const result = await response.json();
+
+      if (result.success) {
+        setDusunList(result.data);
+      } else {
+        setDusunError("Gagal memuat data dusun");
+      }
+    } catch (error) {
+      console.error("Error fetching dusun:", error);
+      setDusunError("Terjadi kesalahan saat memuat data dusun");
+    } finally {
+      setIsLoadingDusun(false);
+    }
+  };
+
+  // Load initial dusun data
+  useEffect(() => {
+    fetchDusun();
+  }, []);
+
+  // Debounced search for dusun
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      if (dusunSearch && showDusunDropdown) {
+        fetchDusun(dusunSearch);
+      }
+    }, 300);
+
+    return () => clearTimeout(timeoutId);
+  }, [dusunSearch, showDusunDropdown]);
+
+  // Filter dusun based on search (for client-side filtering if needed)
+  const filteredDusun = dusunList.filter(
+    (dusun) =>
+      dusun.name.toLowerCase().includes(dusunSearch.toLowerCase()) ||
+      dusun.fullName.toLowerCase().includes(dusunSearch.toLowerCase())
   );
 
   // Get cart items with product details
@@ -158,13 +195,35 @@ export default function CheckoutPage() {
   const selectedDeliveryOption = deliveryOptions.find(
     (d) => d.id === selectedDelivery
   );
-  const baseShippingCost = selectedVillage?.shippingCost || 0;
+  const baseShippingCost = selectedDusun?.shippingCost || 0;
   const total = subtotal + baseShippingCost;
 
-  const handleVillageSelect = (village) => {
-    setSelectedVillage(village);
-    setVillageSearch(village.name);
-    setShowVillageDropdown(false);
+  const handleDusunSelect = (dusun) => {
+    setSelectedDusun(dusun);
+    setDusunSearch(dusun.fullName);
+    setShowDusunDropdown(false);
+  };
+
+  const handleDusunInputChange = (e) => {
+    const value = e.target.value;
+    setDusunSearch(value);
+    setShowDusunDropdown(true);
+
+    // Reset selected dusun if input is cleared
+    if (value === "") {
+      setSelectedDusun(null);
+    }
+  };
+
+  // Clear functions
+  const clearCustomerName = () => {
+    setCustomerName("");
+  };
+
+  const clearDusun = () => {
+    setSelectedDusun(null);
+    setDusunSearch("");
+    setShowDusunDropdown(false);
   };
 
   const handlePlaceOrder = async () => {
@@ -173,17 +232,41 @@ export default function CheckoutPage() {
       alert("Mohon isi nama lengkap Anda");
       return;
     }
-    if (!selectedVillage) {
-      alert("Mohon pilih desa/kelurahan untuk pengiriman");
+    if (!selectedDusun) {
+      alert("Mohon pilih dusun untuk pengiriman");
       return;
     }
 
     setIsProcessing(true);
 
+    // Prepare order data
+    const orderData = {
+      customerName: customerName.trim(),
+      deliveryAddress: {
+        dusunId: selectedDusun.id,
+        dusunName: selectedDusun.name,
+        fullAddress: selectedDusun.fullName,
+        shippingCost: selectedDusun.shippingCost,
+        deliveryNotes: selectedDusun.deliveryNotes,
+      },
+      deliveryTime: selectedDeliveryOption,
+      paymentMethod: selectedPayment,
+      items: cartItemsWithDetails,
+      summary: {
+        subtotal,
+        shippingCost: baseShippingCost,
+        total,
+      },
+    };
+
     // Simulate API call
     setTimeout(() => {
       setIsProcessing(false);
-      // Redirect to WhatsApp or show success modal
+      console.log("Order data:", orderData);
+      // Here you would typically:
+      // 1. Send order to your backend API
+      // 2. Clear the cart
+      // 3. Redirect to success page or WhatsApp
       alert("Pesanan berhasil dibuat! Anda akan dihubungi melalui WhatsApp.");
     }, 2000);
   };
@@ -238,73 +321,134 @@ export default function CheckoutPage() {
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Nama Lengkap *
               </label>
-              <input
-                type="text"
-                value={customerName}
-                onChange={(e) => setCustomerName(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                placeholder="Masukkan nama lengkap"
-                required
-              />
+              <div className="relative">
+                <input
+                  type="text"
+                  value={customerName}
+                  onChange={(e) => setCustomerName(e.target.value)}
+                  className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="Masukkan nama lengkap"
+                  required
+                />
+                {customerName && (
+                  <button
+                    type="button"
+                    onClick={clearCustomerName}
+                    className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                  >
+                    <X size={18} />
+                  </button>
+                )}
+              </div>
             </div>
 
-            {/* Desa/Kelurahan */}
+            {/* Dusun */}
             <div className="relative">
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Desa/Kelurahan *
+                Dusun *
               </label>
               <div className="relative">
                 <input
                   type="text"
-                  value={villageSearch}
-                  onChange={(e) => {
-                    setVillageSearch(e.target.value);
-                    setShowVillageDropdown(true);
-                    if (e.target.value === "") {
-                      setSelectedVillage(null);
-                    }
-                  }}
-                  onFocus={() => setShowVillageDropdown(true)}
-                  className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Cari atau pilih desa/kelurahan"
+                  value={dusunSearch}
+                  onChange={handleDusunInputChange}
+                  onFocus={() => setShowDusunDropdown(true)}
+                  className="w-full pl-12 pr-12 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="Cari atau pilih dusun"
                   required
                 />
                 <Search
                   size={20}
                   className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"
                 />
+                {(dusunSearch || selectedDusun) && (
+                  <button
+                    type="button"
+                    onClick={clearDusun}
+                    className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                  >
+                    <X size={18} />
+                  </button>
+                )}
               </div>
 
-              {/* Village Dropdown */}
-              {showVillageDropdown && (
+              {/* Show delivery notes if dusun selected */}
+              {selectedDusun && selectedDusun.deliveryNotes && (
+                <div className="mt-2 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                  <div className="flex items-start space-x-2">
+                    <AlertCircle
+                      size={16}
+                      className="text-amber-600 mt-0.5 flex-shrink-0"
+                    />
+                    <p className="text-sm text-amber-800">
+                      <span className="font-medium">Catatan Pengiriman:</span>{" "}
+                      {selectedDusun.deliveryNotes}
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* Dusun Dropdown */}
+              {showDusunDropdown && (
                 <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg max-h-48 overflow-y-auto">
-                  {filteredVillages.length > 0 ? (
-                    filteredVillages.map((village) => (
+                  {isLoadingDusun ? (
+                    <div className="px-4 py-3 text-center">
+                      <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
+                      <span className="text-sm text-gray-500">
+                        Memuat data dusun...
+                      </span>
+                    </div>
+                  ) : dusunError ? (
+                    <div className="px-4 py-3">
+                      <div className="flex items-center space-x-2 text-red-600">
+                        <AlertCircle size={16} />
+                        <span className="text-sm">{dusunError}</span>
+                      </div>
                       <button
-                        key={village.id}
-                        type="button"
-                        onClick={() => handleVillageSelect(village)}
-                        className="w-full px-4 py-3 text-left hover:bg-gray-50 flex justify-between items-center"
+                        onClick={() => fetchDusun(dusunSearch)}
+                        className="mt-2 text-sm text-blue-600 hover:text-blue-700"
                       >
-                        <span className="text-gray-900">{village.name}</span>
-                        <span className="text-sm text-gray-500">
-                          {formatPrice(village.shippingCost)}
-                        </span>
+                        Coba lagi
+                      </button>
+                    </div>
+                  ) : filteredDusun.length > 0 ? (
+                    filteredDusun.map((dusun) => (
+                      <button
+                        key={dusun.id}
+                        type="button"
+                        onClick={() => handleDusunSelect(dusun)}
+                        className="w-full px-4 py-3 text-left hover:bg-gray-50 border-b border-gray-100 last:border-b-0"
+                      >
+                        <div className="flex justify-between items-start">
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium text-gray-900 truncate">
+                              {dusun.name}
+                            </p>
+                            <p className="text-sm text-gray-500 truncate">
+                              {dusun.desaKelurahan}, {dusun.kecamatan}
+                            </p>
+                          </div>
+                          <span className="text-sm font-medium text-gray-900 ml-2 flex-shrink-0">
+                            {formatPrice(dusun.shippingCost)}
+                          </span>
+                        </div>
                       </button>
                     ))
                   ) : (
-                    <div className="px-4 py-3 text-gray-500 text-sm">
-                      Desa/kelurahan tidak ditemukan
+                    <div className="px-4 py-3 text-gray-500 text-sm text-center">
+                      {dusunSearch
+                        ? "Dusun tidak ditemukan"
+                        : "Tidak ada data dusun"}
                     </div>
                   )}
                 </div>
               )}
 
               {/* Click outside to close dropdown */}
-              {showVillageDropdown && (
+              {showDusunDropdown && (
                 <div
                   className="fixed inset-0 z-5"
-                  onClick={() => setShowVillageDropdown(false)}
+                  onClick={() => setShowDusunDropdown(false)}
                 />
               )}
             </div>
@@ -448,7 +592,7 @@ export default function CheckoutPage() {
             <div className="flex justify-between">
               <span className="text-gray-600">Ongkos Kirim</span>
               <span className="text-gray-900 font-medium">
-                {selectedVillage ? formatPrice(baseShippingCost) : "Pilih desa"}
+                {selectedDusun ? formatPrice(baseShippingCost) : "Pilih dusun"}
               </span>
             </div>
             <div className="border-t border-gray-100 pt-3">

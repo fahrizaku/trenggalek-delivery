@@ -151,6 +151,11 @@ model Dusun {
   nama_dusun          String        @db.VarChar(100)
   desa_kelurahan_id   Int
   
+  // Atribut baru untuk shipping
+  shipping_cost       Int           @default(5000)  // Ongkos kirim dalam rupiah
+  is_active          Boolean       @default(false)   // Status default nonaktif untuk delivery
+  delivery_notes     String?       @db.Text         // Catatan khusus untuk pengiriman
+  
   // Relasi ke desa/kelurahan
   desa_kelurahan      DesaKelurahan @relation(fields: [desa_kelurahan_id], references: [id], onDelete: Cascade)
   
