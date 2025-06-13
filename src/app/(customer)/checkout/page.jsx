@@ -61,31 +61,52 @@ const allProducts = [
   },
 ];
 
-// Mock delivery time options
+// Updated delivery time options with availability
 const deliveryOptions = [
   {
-    id: "dawn",
-    name: "Subuh",
+    id: "pagi",
+    name: "Pagi",
     time: "05:00 - 06:30",
     description: "Pengiriman pagi hari",
+    available: true,
   },
   {
-    id: "morning",
-    name: "Pagi",
-    time: "09:00 - 12:00",
+    id: "siang",
+    name: "Siang",
+    time: "11:00 - 13:00",
     description: "Pengiriman siang hari",
+    available: false,
+    unavailableReason: "Kurir sedang istirahat",
   },
   {
-    id: "afternoon",
+    id: "sore",
     name: "Sore",
-    time: "16:00 - 19:00",
+    time: "15:00 - 16:00",
     description: "Pengiriman sore hari",
+    available: true,
   },
   {
-    id: "night",
+    id: "petang",
+    name: "Petang",
+    time: "17:00 - 19:00",
+    description: "Pengiriman petang",
+    available: false,
+    unavailableReason: "Kapasitas penuh",
+  },
+  {
+    id: "malam",
     name: "Malam",
-    time: "21:00 - 23:00",
+    time: "20:00 - 22:00",
     description: "Pengiriman malam hari",
+    available: true,
+  },
+  {
+    id: "secepatnya",
+    name: "Secepatnya 🔥",
+    time: "< 30 menit",
+    description: "Dikirim Secepatnya",
+    available: false,
+    unavailableReason: "Semua kurir sedang bertugas",
   },
 ];
 
@@ -108,7 +129,12 @@ const paymentMethods = [
 export default function CheckoutPage() {
   const { getTotalItems, getTotalValue, getCartItems, isLoaded } = useCart();
 
-  const [selectedDelivery, setSelectedDelivery] = useState("morning");
+  // Find first available delivery option as default
+  const firstAvailableDelivery =
+    deliveryOptions.find((option) => option.available)?.id || "pagi";
+  const [selectedDelivery, setSelectedDelivery] = useState(
+    firstAvailableDelivery
+  );
   const [selectedPayment, setSelectedPayment] = useState("cod");
   const [isProcessing, setIsProcessing] = useState(false);
 
@@ -167,6 +193,15 @@ export default function CheckoutPage() {
     }
     if (!selectedDusun) {
       showNotification("Mohon pilih dusun untuk pengiriman", "error");
+      return;
+    }
+
+    // Check if selected delivery is available
+    const selectedOption = deliveryOptions.find(
+      (d) => d.id === selectedDelivery
+    );
+    if (!selectedOption?.available) {
+      showNotification("Waktu pengiriman yang dipilih tidak tersedia", "error");
       return;
     }
 

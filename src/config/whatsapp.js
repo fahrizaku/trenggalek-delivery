@@ -64,10 +64,10 @@ export const formatOrderMessage = (orderData, paymentMethods) => {
   message += `📦 *PESANAN:*\n`;
 
   items.forEach((item, index) => {
-    message += `${index + 1}. ${item.name}\n`;
-    message += `   ${formatCurrencyForWA(item.price)} x ${
+    message += `${index + 1}. ${item.name}\n`; // Baris pertama item (nama produk)
+    message += `    ${formatCurrencyForWA(item.price)} x ${
       item.quantity
-    } = ${formatCurrencyForWA(item.subtotal)}\n\n`;
+    } = ${formatCurrencyForWA(item.subtotal)}\n\n`; // Baris kedua item (harga) diikuti dua newline
   });
 
   // Summary
