@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { MessageCircle } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
+import { useRouter } from "next/navigation";
 import {
   generateTransactionCode,
   sendOrderToWhatsApp,
@@ -126,8 +127,71 @@ const paymentMethods = [
   },
 ];
 
+// Helper functions for localStorage
+const saveToLocalStorage = (customerName, selectedDusun) => {
+  try {
+    // Handle customer name history
+    const existingNameHistory = JSON.parse(
+      localStorage.getItem("customerNameHistory") || "[]"
+    );
+
+    // Remove if already exists to avoid duplicates
+    const filteredNameHistory = existingNameHistory.filter(
+      (name) => name !== customerName
+    );
+
+    // Add to beginning of array
+    const newNameHistory = [customerName, ...filteredNameHistory];
+
+    // Keep only first 3 items for names
+    const limitedNameHistory = newNameHistory.slice(0, 3);
+
+    localStorage.setItem(
+      "customerNameHistory",
+      JSON.stringify(limitedNameHistory)
+    );
+
+    // Handle dusun history
+    const existingDusunHistory = JSON.parse(
+      localStorage.getItem("dusunHistory") || "[]"
+    );
+
+    // Remove if already exists to avoid duplicates
+    const filteredHistory = existingDusunHistory.filter(
+      (dusun) => dusun.id !== selectedDusun.id
+    );
+
+    // Add to beginning of array
+    const newHistory = [selectedDusun, ...filteredHistory];
+
+    // Keep only first 2 items
+    const limitedHistory = newHistory.slice(0, 2);
+
+    localStorage.setItem("dusunHistory", JSON.stringify(limitedHistory));
+  } catch (error) {
+    console.error("Error saving to localStorage:", error);
+  }
+};
+
+const loadFromLocalStorage = () => {
+  try {
+    const customerNameHistory = JSON.parse(
+      localStorage.getItem("customerNameHistory") || "[]"
+    );
+    const dusunHistory = JSON.parse(
+      localStorage.getItem("dusunHistory") || "[]"
+    );
+    return { customerNameHistory, dusunHistory };
+  } catch (error) {
+    console.error("Error loading from localStorage:", error);
+    return { customerNameHistory: [], dusunHistory: [] };
+  }
+};
+
 export default function CheckoutPage() {
-  const { getTotalItems, getTotalValue, getCartItems, isLoaded } = useCart();
+  const { getTotalItems, getTotalValue, getCartItems, isLoaded, clearCart } =
+    useCart();
+  const router = useRouter();
 
   // Find first available delivery option as default
   const firstAvailableDelivery =
@@ -144,6 +208,20 @@ export default function CheckoutPage() {
   // Delivery address states
   const [customerName, setCustomerName] = useState("");
   const [selectedDusun, setSelectedDusun] = useState(null);
+  const [dusunHistory, setDusunHistory] = useState([]);
+  const [customerNameHistory, setCustomerNameHistory] = useState([]);
+
+  // Load saved data from localStorage on component mount
+  useEffect(() => {
+    const savedData = loadFromLocalStorage();
+    setCustomerNameHistory(savedData.customerNameHistory);
+    setDusunHistory(savedData.dusunHistory);
+
+    // Set the most recent name as default if available
+    if (savedData.customerNameHistory.length > 0) {
+      setCustomerName(savedData.customerNameHistory[0]);
+    }
+  }, []);
 
   const formatPrice = (price) => {
     return new Intl.NumberFormat("id-ID", {
@@ -236,6 +314,9 @@ export default function CheckoutPage() {
       setIsProcessing(false);
       console.log("Order data:", orderData);
 
+      // Save to localStorage before proceeding
+      saveToLocalStorage(customerName.trim(), selectedDusun);
+
       // Send to WhatsApp
       try {
         sendOrderToWhatsApp(orderData, paymentMethods);
@@ -244,14 +325,23 @@ export default function CheckoutPage() {
           "success"
         );
 
-        // Optional: Clear cart after successful order
-        // clearCart();
+        // Clear cart and navigate to home page
+        setTimeout(() => {
+          clearCart();
+          router.push("/");
+        }, 1500); // Give some time to see the success notification
       } catch (error) {
         console.error("Error sending to WhatsApp:", error);
         showNotification(
           "Pesanan berhasil dibuat, namun gagal membuka WhatsApp. Silakan hubungi admin.",
           "error"
         );
+
+        // Still clear cart and navigate even if WhatsApp fails
+        setTimeout(() => {
+          clearCart();
+          router.push("/");
+        }, 2000);
       }
     }, 2000);
   };
@@ -300,6 +390,8 @@ export default function CheckoutPage() {
           setCustomerName={setCustomerName}
           selectedDusun={selectedDusun}
           setSelectedDusun={setSelectedDusun}
+          dusunHistory={dusunHistory}
+          customerNameHistory={customerNameHistory}
           showNotification={showNotification}
         />
 
