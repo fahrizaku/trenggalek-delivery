@@ -64,9 +64,17 @@ const allProducts = [
 // Updated delivery time options with availability
 const deliveryOptions = [
   {
+    id: "fajar",
+    name: "Pagi Buta",
+    time: "05:00 - 06:30",
+    description: "Cocok untuk sarapan",
+    available: true,
+    unavailableReason: "",
+  },
+  {
     id: "pagi",
     name: "Pagi",
-    time: "05:00 - 06:30",
+    time: "08:00 - 10:00",
     description: "Pengiriman pagi hari",
     available: true,
   },
@@ -81,7 +89,7 @@ const deliveryOptions = [
   {
     id: "sore",
     name: "Sore",
-    time: "15:00 - 16:00",
+    time: "14:00 - 16:00",
     description: "Pengiriman sore hari",
     available: true,
   },
