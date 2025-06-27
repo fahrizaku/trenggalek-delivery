@@ -1,17 +1,20 @@
 // file: src/app/(customer)/checkout/components/DeliveryAddressSection.jsx
 "use client";
 import { useState, useEffect } from "react";
-import { MapPin, Search, AlertCircle, X } from "lucide-react";
+import { MapPin, Search, AlertCircle, X, Clock } from "lucide-react";
 
 export default function DeliveryAddressSection({
   customerName,
   setCustomerName,
   selectedDusun,
   setSelectedDusun,
-  showNotification, // Add this prop
+  dusunHistory = [], // Add this prop
+  customerNameHistory = [], // Add this prop
+  showNotification,
 }) {
   const [dusunSearch, setDusunSearch] = useState("");
   const [showDusunDropdown, setShowDusunDropdown] = useState(false);
+  const [showNameDropdown, setShowNameDropdown] = useState(false);
   const [dusunList, setDusunList] = useState([]);
   const [isLoadingDusun, setIsLoadingDusun] = useState(false);
   const [dusunError, setDusunError] = useState(null);
@@ -65,12 +68,28 @@ export default function DeliveryAddressSection({
     return () => clearTimeout(timeoutId);
   }, [dusunSearch, showDusunDropdown]);
 
-  // Filter dusun based on search
-  const filteredDusun = dusunList.filter(
-    (dusun) =>
-      dusun.name.toLowerCase().includes(dusunSearch.toLowerCase()) ||
-      dusun.fullName.toLowerCase().includes(dusunSearch.toLowerCase())
-  );
+  // Filter dusun based on search and combine with history
+  const getFilteredDusunWithHistory = () => {
+    let filtered = dusunList.filter(
+      (dusun) =>
+        dusun.name.toLowerCase().includes(dusunSearch.toLowerCase()) ||
+        dusun.fullName.toLowerCase().includes(dusunSearch.toLowerCase())
+    );
+
+    // If there's no search query and we have history, show history first
+    if (!dusunSearch && dusunHistory.length > 0) {
+      // Remove history items from the main list to avoid duplicates
+      const historyIds = dusunHistory.map((h) => h.id);
+      filtered = filtered.filter((dusun) => !historyIds.includes(dusun.id));
+
+      // Combine: history first, then filtered results
+      return [...dusunHistory, ...filtered];
+    }
+
+    return filtered;
+  };
+
+  const filteredDusun = getFilteredDusunWithHistory();
 
   const formatPrice = (price) => {
     return new Intl.NumberFormat("id-ID", {
@@ -99,12 +118,33 @@ export default function DeliveryAddressSection({
 
   const clearCustomerName = () => {
     setCustomerName("");
+    setShowNameDropdown(false);
+  };
+
+  const handleNameSelect = (name) => {
+    setCustomerName(name);
+    setShowNameDropdown(false);
+  };
+
+  const handleNameInputChange = (e) => {
+    setCustomerName(e.target.value);
+  };
+
+  const handleNameFocus = () => {
+    if (customerNameHistory.length > 0) {
+      setShowNameDropdown(true);
+    }
   };
 
   const clearDusun = () => {
     setSelectedDusun(null);
     setDusunSearch("");
     setShowDusunDropdown(false);
+  };
+
+  // Check if a dusun is from history
+  const isFromHistory = (dusun) => {
+    return dusunHistory.some((h) => h.id === dusun.id);
   };
 
   return (
@@ -120,7 +160,7 @@ export default function DeliveryAddressSection({
 
       <div className="space-y-4">
         {/* Nama */}
-        <div>
+        <div className="relative">
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Nama Lengkap *
           </label>
@@ -128,7 +168,8 @@ export default function DeliveryAddressSection({
             <input
               type="text"
               value={customerName}
-              onChange={(e) => setCustomerName(e.target.value)}
+              onChange={handleNameInputChange}
+              onFocus={handleNameFocus}
               className="w-full px-4 py-3 pr-14 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               placeholder="Masukkan nama lengkap"
               required
@@ -149,6 +190,41 @@ export default function DeliveryAddressSection({
               </button>
             )}
           </div>
+
+          {/* Name History Dropdown */}
+          {showNameDropdown && customerNameHistory.length > 0 && (
+            <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg max-h-32 overflow-y-auto">
+              <div className="px-4 py-2 bg-gray-50 border-b border-gray-100">
+                <div className="flex items-center space-x-2">
+                  <Clock size={14} className="text-gray-500" />
+                  <span className="text-xs font-medium text-gray-600">
+                    Nama Terakhir
+                  </span>
+                </div>
+              </div>
+              {customerNameHistory.map((name, index) => (
+                <button
+                  key={index}
+                  type="button"
+                  onClick={() => handleNameSelect(name)}
+                  className="w-full px-4 py-3 text-left border-b border-gray-100 last:border-b-0 bg-blue-50 hover:bg-blue-100"
+                >
+                  <div className="flex items-center space-x-2">
+                    <p className="font-medium text-gray-900">{name}</p>
+                    <Clock size={12} className="text-blue-500 flex-shrink-0" />
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Click outside to close name dropdown */}
+          {showNameDropdown && (
+            <div
+              className="fixed inset-0 z-5"
+              onClick={() => setShowNameDropdown(false)}
+            />
+          )}
         </div>
 
         {/* Dusun */}
@@ -227,28 +303,72 @@ export default function DeliveryAddressSection({
                   </button>
                 </div>
               ) : filteredDusun.length > 0 ? (
-                filteredDusun.map((dusun) => (
-                  <button
-                    key={dusun.id}
-                    type="button"
-                    onClick={() => handleDusunSelect(dusun)}
-                    className="w-full px-4 py-3 text-left hover:bg-gray-50 border-b border-gray-100 last:border-b-0"
-                  >
-                    <div className="flex justify-between items-start">
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium text-gray-900 truncate">
-                          dsn. {dusun.name}
-                        </p>
-                        <p className="text-sm text-gray-500 truncate">
-                          desa {dusun.desaKelurahan}, Kec. {dusun.kecamatan}
-                        </p>
+                <>
+                  {/* Show "Riwayat Terakhir" header if we have history items and no search */}
+                  {!dusunSearch && dusunHistory.length > 0 && (
+                    <div className="px-4 py-2 bg-gray-50 border-b border-gray-100">
+                      <div className="flex items-center space-x-2">
+                        <Clock size={14} className="text-gray-500" />
+                        <span className="text-xs font-medium text-gray-600">
+                          Riwayat Terakhir
+                        </span>
                       </div>
-                      <span className="text-sm font-medium text-gray-900 ml-2 flex-shrink-0">
-                        {formatPrice(dusun.shippingCost)}
-                      </span>
                     </div>
-                  </button>
-                ))
+                  )}
+
+                  {filteredDusun.map((dusun, index) => {
+                    const isHistory = isFromHistory(dusun);
+                    const isFirstNonHistory =
+                      !dusunSearch &&
+                      dusunHistory.length > 0 &&
+                      !isHistory &&
+                      index === dusunHistory.length;
+
+                    return (
+                      <div key={dusun.id}>
+                        {/* Show "Semua Dusun" header for non-history items */}
+                        {isFirstNonHistory && (
+                          <div className="px-4 py-2 bg-gray-50 border-b border-gray-100">
+                            <span className="text-xs font-medium text-gray-600">
+                              Semua Dusun
+                            </span>
+                          </div>
+                        )}
+
+                        <button
+                          type="button"
+                          onClick={() => handleDusunSelect(dusun)}
+                          className={`w-full px-4 py-3 text-left hover:bg-gray-50 border-b border-gray-100 last:border-b-0 ${
+                            isHistory ? "bg-blue-50 hover:bg-blue-100" : ""
+                          }`}
+                        >
+                          <div className="flex justify-between items-start">
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center space-x-2">
+                                <p className="font-medium text-gray-900 truncate">
+                                  {dusun.name}
+                                </p>
+                                {isHistory && (
+                                  <Clock
+                                    size={12}
+                                    className="text-blue-500 flex-shrink-0"
+                                  />
+                                )}
+                              </div>
+                              <p className="text-sm text-gray-500 truncate">
+                                Desa {dusun.desaKelurahan}, Kec.{" "}
+                                {dusun.kecamatan}
+                              </p>
+                            </div>
+                            <span className="text-sm font-medium text-gray-900 ml-2 flex-shrink-0">
+                              {formatPrice(dusun.shippingCost)}
+                            </span>
+                          </div>
+                        </button>
+                      </div>
+                    );
+                  })}
+                </>
               ) : (
                 <div className="px-4 py-3 text-gray-500 text-sm text-center">
                   {dusunSearch

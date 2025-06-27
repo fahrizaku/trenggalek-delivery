@@ -158,8 +158,7 @@ export default function SupermarketProductsPage() {
   const [showCartNotification, setShowCartNotification] = useState(false);
 
   // Menggunakan cart context
-  const { addToCart, removeFromCart, clearCart, getCartQuantity, isLoaded } =
-    useCart();
+  const { addToCart, removeFromCart, getCartQuantity, isLoaded } = useCart();
 
   const formatPrice = (price) => {
     return new Intl.NumberFormat("id-ID", {
@@ -231,16 +230,6 @@ export default function SupermarketProductsPage() {
               <h1 className="text-lg sm:text-xl font-bold text-gray-900">
                 Produk Supermarket
               </h1>
-            </div>
-
-            {/* Optional: Add clear cart button if needed */}
-            <div className="flex items-center space-x-3">
-              <button
-                onClick={clearCart}
-                className="text-sm text-red-500 hover:text-red-600 transition-colors"
-              >
-                Clear All
-              </button>
             </div>
           </div>
 

@@ -87,28 +87,22 @@ model Product {
   price       Float
   purchasePrice Float?    // Harga beli dari supplier
   image       String?
-  category    String      // Kategori produk berdasarkan jenis toko
+  category    String      // Kategori produk
   stock       Int         @default(50)
   weight      Int         // Berat produk dalam gram
   isActive    Boolean     @default(true)
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
-
-  // Common fields
   unit        String?     // Satuan (pcs, kg, liter, strip, botol, porsi, dll)
   
   // Supermarket specific fields
   brand       String?     // Merek produk (untuk supermarket)
   
   // Pharmacy specific fields
-  manufacturer            String?  // Pabrik pembuat (untuk apotek)
   isPrescriptionRequired  Boolean? // Apakah butuh resep (untuk apotek)
   
   // Food specific fields
   preparationTime Int?     // Waktu persiapan dalam menit (untuk makanan)
-  isSpicy         Boolean? // Apakah pedas (untuk makanan)
-  isVegetarian    Boolean? // Apakah vegetarian (untuk makanan)
-  isHalal         Boolean? // Apakah halal (untuk makanan)
 
   // Relasi
   store Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
@@ -121,7 +115,10 @@ model Product {
   @@map("products")
 }
 
-// ======================= Data Wilayah =======================
+// =============================================================
+// ======================= Data Wilayah ========================
+// =============================================================
+
 model Kecamatan {
   id               Int            @id @default(autoincrement())
   nama_kecamatan   String         @db.VarChar(100)
@@ -153,8 +150,8 @@ model Dusun {
   
   // Atribut baru untuk shipping
   shipping_cost       Int           @default(5000)  // Ongkos kirim dalam rupiah
-  is_active          Boolean       @default(false)   // Status default nonaktif untuk delivery
-  delivery_notes     String?       @db.Text         // Catatan khusus untuk pengiriman
+  is_active          Boolean        @default(false)   // Status default nonaktif untuk delivery
+  delivery_notes     String?        @db.Text         // Catatan khusus untuk pengiriman
   
   // Relasi ke desa/kelurahan
   desa_kelurahan      DesaKelurahan @relation(fields: [desa_kelurahan_id], references: [id], onDelete: Cascade)
