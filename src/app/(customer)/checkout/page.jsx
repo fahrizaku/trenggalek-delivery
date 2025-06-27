@@ -69,15 +69,16 @@ const deliveryOptions = [
     name: "Pagi Buta",
     time: "05:00 - 06:30",
     description: "Cocok untuk sarapan",
-    available: true,
-    unavailableReason: "",
+    available: false,
+    unavailableReason: "belum tersedia",
   },
   {
     id: "pagi",
     name: "Pagi",
     time: "08:00 - 10:00",
     description: "Pengiriman pagi hari",
-    available: true,
+    available: false,
+    unavailableReason: "belum tersedia",
   },
   {
     id: "siang",
@@ -85,7 +86,7 @@ const deliveryOptions = [
     time: "11:00 - 13:00",
     description: "Pengiriman siang hari",
     available: false,
-    unavailableReason: "Kurir sedang istirahat",
+    unavailableReason: "belum tersedia",
   },
   {
     id: "sore",
@@ -99,8 +100,8 @@ const deliveryOptions = [
     name: "Petang",
     time: "17:00 - 19:00",
     description: "Pengiriman petang",
-    available: false,
-    unavailableReason: "Kapasitas penuh",
+    available: true,
+    unavailableReason: "",
   },
   {
     id: "malam",
@@ -274,7 +275,7 @@ export default function CheckoutPage() {
   const handlePlaceOrder = async () => {
     // Validation
     if (!customerName.trim()) {
-      showNotification("Mohon isi nama lengkap Anda", "error");
+      showNotification("Mohon isi nama Anda", "error");
       return;
     }
     if (!selectedDusun) {
