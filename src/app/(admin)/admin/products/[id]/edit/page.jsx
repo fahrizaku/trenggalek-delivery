@@ -1,55 +1,27 @@
 // src/app/admin/products/[id]/edit/page.js
 import ProductForm from "@/components/ProductForm";
 
-// Dummy function - nanti akan diganti dengan fetch dari database
+// Fetch product dari API
 async function getProduct(id) {
-  // Simulate API call
-  const products = {
-    1: {
-      id: "1",
-      name: "Indomie Goreng",
-      productType: "SUPERMARKET",
-      description: "Mie instan rasa goreng",
-      category: "Makanan Instan",
-      price: 3500,
-      purchasePrice: 3000,
-      stock: 100,
-      weight: 85,
-      unit: "pcs",
-      brand: "Indofood",
-      isActive: true,
-    },
-    2: {
-      id: "2",
-      name: "Paracetamol 500mg",
-      productType: "PHARMACY",
-      description: "Obat penurun demam dan pereda nyeri",
-      category: "Obat Bebas",
-      price: 5000,
-      purchasePrice: 4000,
-      stock: 50,
-      weight: 10,
-      unit: "strip",
-      isPrescriptionRequired: false,
-      isActive: true,
-    },
-    3: {
-      id: "3",
-      name: "Nasi Gudeg",
-      productType: "FOOD",
-      description: "Nasi gudeg khas Yogyakarta",
-      category: "Makanan Tradisional",
-      price: 15000,
-      purchasePrice: 12000,
-      stock: 20,
-      weight: 300,
-      unit: "porsi",
-      preparationTime: 15,
-      isActive: true,
-    },
-  };
+  try {
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
+    const response = await fetch(`${baseUrl}/api/products/${id}`, {
+      cache: "no-store", // Disable caching untuk data yang sering berubah
+    });
 
-  return products[id] || null;
+    if (!response.ok) {
+      if (response.status === 404) {
+        return null;
+      }
+      throw new Error("Failed to fetch product");
+    }
+
+    const data = await response.json();
+    return data.product;
+  } catch (error) {
+    console.error("Error fetching product:", error);
+    return null;
+  }
 }
 
 export default async function EditProductPage({ params }) {
@@ -58,12 +30,19 @@ export default async function EditProductPage({ params }) {
   if (!product) {
     return (
       <div className="text-center py-12">
+        <div className="text-gray-400 text-6xl mb-4">❌</div>
         <h2 className="text-2xl font-bold text-gray-900 mb-4">
           Product Not Found
         </h2>
-        <p className="text-gray-600">
-          The product you're looking for doesn't exist.
+        <p className="text-gray-600 mb-6">
+          The product you're looking for doesn't exist or may have been deleted.
         </p>
+        <a
+          href="/admin/products"
+          className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+        >
+          Back to Products
+        </a>
       </div>
     );
   }

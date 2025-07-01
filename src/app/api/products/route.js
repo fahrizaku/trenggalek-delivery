@@ -1,6 +1,7 @@
 // src/app/api/products/route.js
 import { NextResponse } from "next/server";
-// import { prisma } from '@/lib/prisma'
+import { db } from "@/lib/db";
+import { cleanProductData, validateProductData } from "@/lib/utils";
 
 // GET /api/products - Get all products
 export async function GET(request) {
@@ -9,97 +10,42 @@ export async function GET(request) {
     const productType = searchParams.get("productType");
     const category = searchParams.get("category");
     const search = searchParams.get("search");
+    const page = parseInt(searchParams.get("page")) || 1;
+    const limit = parseInt(searchParams.get("limit")) || 10;
+    const skip = (page - 1) * limit;
 
-    // Dummy data - nanti akan diganti dengan Prisma query
-    let products = [
-      {
-        id: "1",
-        name: "Indomie Goreng",
-        productType: "SUPERMARKET",
-        description: "Mie instan rasa goreng",
-        category: "Makanan Instan",
-        price: 3500,
-        purchasePrice: 3000,
-        stock: 100,
-        weight: 85,
-        unit: "pcs",
-        brand: "Indofood",
-        isActive: true,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      },
-      {
-        id: "2",
-        name: "Paracetamol 500mg",
-        productType: "PHARMACY",
-        description: "Obat penurun demam dan pereda nyeri",
-        category: "Obat Bebas",
-        price: 5000,
-        purchasePrice: 4000,
-        stock: 50,
-        weight: 10,
-        unit: "strip",
-        isPrescriptionRequired: false,
-        isActive: true,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      },
-      {
-        id: "3",
-        name: "Nasi Gudeg",
-        productType: "FOOD",
-        description: "Nasi gudeg khas Yogyakarta",
-        category: "Makanan Tradisional",
-        price: 15000,
-        purchasePrice: 12000,
-        stock: 20,
-        weight: 300,
-        unit: "porsi",
-        preparationTime: 15,
-        isActive: true,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      },
-    ];
-
-    // Filter berdasarkan productType
-    if (productType) {
-      products = products.filter((p) => p.productType === productType);
-    }
-
-    // Filter berdasarkan category
-    if (category) {
-      products = products.filter((p) => p.category === category);
-    }
-
-    // Filter berdasarkan search
-    if (search) {
-      products = products.filter(
-        (p) =>
-          p.name.toLowerCase().includes(search.toLowerCase()) ||
-          p.description?.toLowerCase().includes(search.toLowerCase())
-      );
-    }
-
-    /* Nanti akan diganti dengan:
+    // Build where clause untuk filtering
     const whereClause = {
       ...(productType && { productType }),
       ...(category && { category }),
       ...(search && {
         OR: [
-          { name: { contains: search, mode: 'insensitive' } },
-          { description: { contains: search, mode: 'insensitive' } }
-        ]
-      })
-    }
+          { name: { contains: search, mode: "insensitive" } },
+          { description: { contains: search, mode: "insensitive" } },
+        ],
+      }),
+    };
 
-    const products = await prisma.product.findMany({
-      where: whereClause,
-      orderBy: { createdAt: 'desc' }
-    })
-    */
+    // Get products dengan pagination
+    const [products, total] = await Promise.all([
+      db.product.findMany({
+        where: whereClause,
+        orderBy: { createdAt: "desc" },
+        skip,
+        take: limit,
+      }),
+      db.product.count({ where: whereClause }),
+    ]);
 
-    return NextResponse.json({ products });
+    return NextResponse.json({
+      products,
+      pagination: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+    });
   } catch (error) {
     console.error("Error fetching products:", error);
     return NextResponse.json(
@@ -112,40 +58,37 @@ export async function GET(request) {
 // POST /api/products - Create new product
 export async function POST(request) {
   try {
-    const data = await request.json();
+    const rawData = await request.json();
 
     // Validasi data
-    if (!data.name || !data.productType || !data.price || !data.category) {
+    const validation = validateProductData(rawData);
+    if (!validation.isValid) {
       return NextResponse.json(
-        { error: "Missing required fields" },
+        { error: "Validation failed", details: validation.errors },
         { status: 400 }
       );
     }
 
-    // Dummy response - nanti akan diganti dengan Prisma create
-    const newProduct = {
-      id: Date.now().toString(),
-      ...data,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
+    // Clean dan prepare data
+    const data = cleanProductData(rawData);
 
-    /* Nanti akan diganti dengan:
-    const product = await prisma.product.create({
-      data: {
-        ...data,
-        price: Number(data.price),
-        purchasePrice: data.purchasePrice ? Number(data.purchasePrice) : null,
-        stock: Number(data.stock),
-        weight: Number(data.weight),
-        ...(data.preparationTime && { preparationTime: Number(data.preparationTime) })
-      }
-    })
-    */
+    // Create product di database
+    const product = await db.product.create({
+      data,
+    });
 
-    return NextResponse.json({ product: newProduct }, { status: 201 });
+    return NextResponse.json({ product }, { status: 201 });
   } catch (error) {
     console.error("Error creating product:", error);
+
+    // Handle db unique constraint errors
+    if (error.code === "P2002") {
+      return NextResponse.json(
+        { error: "Product with this name already exists" },
+        { status: 409 }
+      );
+    }
+
     return NextResponse.json(
       { error: "Failed to create product" },
       { status: 500 }

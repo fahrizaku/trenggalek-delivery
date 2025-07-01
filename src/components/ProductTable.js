@@ -1,26 +1,45 @@
 // src/components/ProductTable.js
+"use client";
 import Link from "next/link";
-
-const getProductTypeColor = (type) => {
-  switch (type) {
-    case "SUPERMARKET":
-      return "bg-green-100 text-green-800";
-    case "PHARMACY":
-      return "bg-red-100 text-red-800";
-    case "FOOD":
-      return "bg-yellow-100 text-yellow-800";
-    default:
-      return "bg-gray-100 text-gray-800";
-  }
-};
-
-const getStockStatus = (stock) => {
-  if (stock === 0) return "bg-red-100 text-red-800";
-  if (stock < 10) return "bg-yellow-100 text-yellow-800";
-  return "bg-green-100 text-green-800";
-};
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import {
+  formatCurrency,
+  getProductTypeColor,
+  getStockStatusColor,
+} from "@/lib/utils";
 
 export default function ProductTable({ products }) {
+  const router = useRouter();
+  const [deletingId, setDeletingId] = useState(null);
+
+  const handleDelete = async (product) => {
+    if (!confirm(`Are you sure you want to delete "${product.name}"?`)) {
+      return;
+    }
+
+    setDeletingId(product.id);
+
+    try {
+      const response = await fetch(`/api/products/${product.id}`, {
+        method: "DELETE",
+      });
+
+      if (response.ok) {
+        // Refresh halaman untuk update data
+        router.refresh();
+      } else {
+        const error = await response.json();
+        alert(error.message || "Failed to delete product");
+      }
+    } catch (error) {
+      console.error("Error deleting product:", error);
+      alert("Failed to delete product");
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
   return (
     <div className="bg-white rounded-lg shadow overflow-hidden">
       <table className="min-w-full divide-y divide-gray-200">
@@ -57,6 +76,11 @@ export default function ProductTable({ products }) {
                   <div className="text-sm font-medium text-gray-900">
                     {product.name}
                   </div>
+                  {product.description && (
+                    <div className="text-sm text-gray-500 truncate max-w-xs">
+                      {product.description}
+                    </div>
+                  )}
                   {product.brand && (
                     <div className="text-sm text-gray-500">
                       Brand: {product.brand}
@@ -70,6 +94,11 @@ export default function ProductTable({ products }) {
                   {product.isPrescriptionRequired && (
                     <div className="text-sm text-red-600">
                       Prescription Required
+                    </div>
+                  )}
+                  {product.unit && (
+                    <div className="text-sm text-gray-500">
+                      Unit: {product.unit}
                     </div>
                   )}
                 </div>
@@ -86,12 +115,19 @@ export default function ProductTable({ products }) {
               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                 {product.category}
               </td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                Rp {product.price.toLocaleString("id-ID")}
+              <td className="px-6 py-4 whitespace-nowrap">
+                <div className="text-sm text-gray-900">
+                  {formatCurrency(product.price)}
+                </div>
+                {product.purchasePrice && (
+                  <div className="text-xs text-gray-500">
+                    Cost: {formatCurrency(product.purchasePrice)}
+                  </div>
+                )}
               </td>
               <td className="px-6 py-4 whitespace-nowrap">
                 <span
-                  className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStockStatus(
+                  className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStockStatusColor(
                     product.stock
                   )}`}
                 >
@@ -113,12 +149,16 @@ export default function ProductTable({ products }) {
                 <div className="flex space-x-2">
                   <Link
                     href={`/admin/products/${product.id}/edit`}
-                    className="text-blue-600 hover:text-blue-900"
+                    className="text-blue-600 hover:text-blue-900 transition-colors"
                   >
                     Edit
                   </Link>
-                  <button className="text-red-600 hover:text-red-900">
-                    Delete
+                  <button
+                    onClick={() => handleDelete(product)}
+                    disabled={deletingId === product.id}
+                    className="text-red-600 hover:text-red-900 disabled:opacity-50 transition-colors"
+                  >
+                    {deletingId === product.id ? "Deleting..." : "Delete"}
                   </button>
                 </div>
               </td>

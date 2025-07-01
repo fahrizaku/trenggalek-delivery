@@ -1,4 +1,5 @@
-import { PrismaClient } from "@prisma/client";
+// file : src/lib/db.js
+import { PrismaClient } from "../generated/prisma/client";
 
 // Deklarasi variabel global untuk Prisma Client
 globalThis.prisma = globalThis.prisma || undefined;

@@ -1,39 +1,16 @@
 // src/app/api/products/[id]/route.js
 import { NextResponse } from "next/server";
-// import { prisma } from '@/lib/prisma'
+import { db } from "@/lib/db";
+import { cleanProductData, validateProductData } from "@/lib/utils";
 
 // GET /api/products/[id] - Get single product
 export async function GET(request, { params }) {
   try {
     const { id } = params;
 
-    // Dummy data - nanti akan diganti dengan Prisma findUnique
-    const products = {
-      1: {
-        id: "1",
-        name: "Indomie Goreng",
-        productType: "SUPERMARKET",
-        description: "Mie instan rasa goreng",
-        category: "Makanan Instan",
-        price: 3500,
-        purchasePrice: 3000,
-        stock: 100,
-        weight: 85,
-        unit: "pcs",
-        brand: "Indofood",
-        isActive: true,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      },
-    };
-
-    const product = products[id];
-
-    /* Nanti akan diganti dengan:
-    const product = await prisma.product.findUnique({
-      where: { id }
-    })
-    */
+    const product = await db.product.findUnique({
+      where: { id },
+    });
 
     if (!product) {
       return NextResponse.json({ error: "Product not found" }, { status: 404 });
@@ -53,41 +30,50 @@ export async function GET(request, { params }) {
 export async function PUT(request, { params }) {
   try {
     const { id } = params;
-    const data = await request.json();
+    const rawData = await request.json();
+
+    // Check if product exists
+    const existingProduct = await db.product.findUnique({
+      where: { id },
+    });
+
+    if (!existingProduct) {
+      return NextResponse.json({ error: "Product not found" }, { status: 404 });
+    }
 
     // Validasi data
-    if (!data.name || !data.productType || !data.price || !data.category) {
+    const validation = validateProductData(rawData);
+    if (!validation.isValid) {
       return NextResponse.json(
-        { error: "Missing required fields" },
+        { error: "Validation failed", details: validation.errors },
         { status: 400 }
       );
     }
 
-    // Dummy response - nanti akan diganti dengan Prisma update
-    const updatedProduct = {
-      id,
-      ...data,
-      updatedAt: new Date(),
-    };
+    // Clean dan prepare data
+    const data = cleanProductData(rawData);
 
-    /* Nanti akan diganti dengan:
-    const product = await prisma.product.update({
+    // Update product di database
+    const product = await db.product.update({
       where: { id },
       data: {
         ...data,
-        price: Number(data.price),
-        purchasePrice: data.purchasePrice ? Number(data.purchasePrice) : null,
-        stock: Number(data.stock),
-        weight: Number(data.weight),
-        ...(data.preparationTime && { preparationTime: Number(data.preparationTime) }),
-        updatedAt: new Date()
-      }
-    })
-    */
+        updatedAt: new Date(),
+      },
+    });
 
-    return NextResponse.json({ product: updatedProduct });
+    return NextResponse.json({ product });
   } catch (error) {
     console.error("Error updating product:", error);
+
+    // Handle db unique constraint errors
+    if (error.code === "P2002") {
+      return NextResponse.json(
+        { error: "Product with this name already exists" },
+        { status: 409 }
+      );
+    }
+
     return NextResponse.json(
       { error: "Failed to update product" },
       { status: 500 }
@@ -100,16 +86,38 @@ export async function DELETE(request, { params }) {
   try {
     const { id } = params;
 
-    // Dummy response - nanti akan diganti dengan Prisma delete
-    /* Nanti akan diganti dengan:
-    await prisma.product.delete({
-      where: { id }
-    })
-    */
+    // Check if product exists
+    const existingProduct = await db.product.findUnique({
+      where: { id },
+    });
 
-    return NextResponse.json({ message: "Product deleted successfully" });
+    if (!existingProduct) {
+      return NextResponse.json({ error: "Product not found" }, { status: 404 });
+    }
+
+    // Delete product
+    await db.product.delete({
+      where: { id },
+    });
+
+    return NextResponse.json({
+      message: "Product deleted successfully",
+      deletedProduct: existingProduct,
+    });
   } catch (error) {
     console.error("Error deleting product:", error);
+
+    // Handle foreign key constraint errors
+    if (error.code === "P2003") {
+      return NextResponse.json(
+        {
+          error:
+            "Cannot delete product. It may be referenced by other records.",
+        },
+        { status: 409 }
+      );
+    }
+
     return NextResponse.json(
       { error: "Failed to delete product" },
       { status: 500 }
