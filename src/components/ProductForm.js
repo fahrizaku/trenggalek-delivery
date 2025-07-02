@@ -17,6 +17,7 @@ export default function ProductForm({ product = null }) {
     stock: product?.stock || 50,
     weight: product?.weight || "",
     unit: product?.unit || "",
+    image: product?.image || "",
     isActive: product?.isActive ?? true,
 
     // Supermarket specific
@@ -67,6 +68,11 @@ export default function ProductForm({ product = null }) {
       cleanData.weight = Number(cleanData.weight);
       if (cleanData.preparationTime) {
         cleanData.preparationTime = Number(cleanData.preparationTime);
+      }
+
+      // Handle empty image string
+      if (!cleanData.image.trim()) {
+        cleanData.image = null;
       }
 
       const url = isEdit ? `/api/products/${product.id}` : "/api/products";
@@ -166,6 +172,43 @@ export default function ProductForm({ product = null }) {
               rows="3"
               className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
+          </div>
+
+          {/* Image URL */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Image URL
+            </label>
+            <input
+              type="url"
+              name="image"
+              value={formData.image}
+              onChange={handleInputChange}
+              placeholder="https://example.com/image.jpg"
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+            <p className="mt-1 text-sm text-gray-500">
+              Enter a valid URL for the product image
+            </p>
+            {/* Image Preview */}
+            {formData.image && (
+              <div className="mt-3">
+                <p className="text-sm font-medium text-gray-700 mb-2">
+                  Preview:
+                </p>
+                <img
+                  src={formData.image}
+                  alt="Product preview"
+                  className="w-32 h-32 object-cover rounded-lg border border-gray-300"
+                  onError={(e) => {
+                    e.target.style.display = "none";
+                  }}
+                  onLoad={(e) => {
+                    e.target.style.display = "block";
+                  }}
+                />
+              </div>
+            )}
           </div>
 
           {/* Price & Stock */}

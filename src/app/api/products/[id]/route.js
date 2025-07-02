@@ -1,4 +1,3 @@
-// src/app/api/products/[id]/route.js
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { cleanProductData, validateProductData } from "@/lib/utils";
@@ -6,7 +5,7 @@ import { cleanProductData, validateProductData } from "@/lib/utils";
 // GET /api/products/[id] - Get single product
 export async function GET(request, { params }) {
   try {
-    const { id } = params;
+    const { id } = await params; // Await params before destructuring
 
     const product = await db.product.findUnique({
       where: { id },
@@ -29,7 +28,7 @@ export async function GET(request, { params }) {
 // PUT /api/products/[id] - Update product
 export async function PUT(request, { params }) {
   try {
-    const { id } = params;
+    const { id } = await params; // Await params before destructuring
     const rawData = await request.json();
 
     // Check if product exists
@@ -84,7 +83,7 @@ export async function PUT(request, { params }) {
 // DELETE /api/products/[id] - Delete product
 export async function DELETE(request, { params }) {
   try {
-    const { id } = params;
+    const { id } = await params; // Await params before destructuring
 
     // Check if product exists
     const existingProduct = await db.product.findUnique({

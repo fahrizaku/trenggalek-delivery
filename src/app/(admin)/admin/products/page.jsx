@@ -7,11 +7,14 @@ import { db } from "@/lib/db";
 // Fetch products dari database
 async function getProducts(searchParams = {}) {
   try {
-    const productType = searchParams.productType || "";
-    const category = searchParams.category || "";
-    const search = searchParams.search || "";
-    const page = parseInt(searchParams.page) || 1;
-    const limit = parseInt(searchParams.limit) || 10;
+    // Await searchParams if it's a Promise
+    const params = await searchParams;
+
+    const productType = params.productType || "";
+    const category = params.category || "";
+    const search = params.search || "";
+    const page = parseInt(params.page) || 1;
+    const limit = parseInt(params.limit) || 10;
     const skip = (page - 1) * limit;
 
     // Build where clause untuk filtering
@@ -61,7 +64,9 @@ async function getProducts(searchParams = {}) {
 }
 
 export default async function ProductsPage({ searchParams = {} }) {
-  const { products, pagination } = await getProducts(searchParams);
+  // Await searchParams before using it
+  const params = await searchParams;
+  const { products, pagination } = await getProducts(params);
 
   return (
     <div>
@@ -100,7 +105,7 @@ export default async function ProductsPage({ searchParams = {} }) {
                 {pagination.page > 1 && (
                   <Link
                     href={`?${new URLSearchParams({
-                      ...searchParams,
+                      ...params,
                       page: (pagination.page - 1).toString(),
                     })}`}
                     className="px-3 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
@@ -111,7 +116,7 @@ export default async function ProductsPage({ searchParams = {} }) {
                 {pagination.page < pagination.totalPages && (
                   <Link
                     href={`?${new URLSearchParams({
-                      ...searchParams,
+                      ...params,
                       page: (pagination.page + 1).toString(),
                     })}`}
                     className="px-3 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
@@ -130,7 +135,7 @@ export default async function ProductsPage({ searchParams = {} }) {
             No products found
           </h3>
           <p className="text-gray-600 mb-6">
-            {Object.keys(searchParams).some((key) => searchParams[key])
+            {Object.keys(params).some((key) => params[key])
               ? "Try adjusting your search filters or create a new product."
               : "Get started by creating your first product."}
           </p>

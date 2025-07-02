@@ -25,7 +25,8 @@ async function getProduct(id) {
 }
 
 export default async function EditProductPage({ params }) {
-  const product = await getProduct(params.id);
+  const { id } = await params; // Await params before accessing properties
+  const product = await getProduct(id);
 
   if (!product) {
     return (
