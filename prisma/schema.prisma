@@ -23,7 +23,7 @@ enum ProductType {
 
 // Model unified untuk semua produk
 model Product {
-  id            Int         @id @default(autoincrement())
+  id            String      @id @default(cuid())
   productType   ProductType // Discriminator field
   name          String
   description   String?
